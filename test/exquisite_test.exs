@@ -25,9 +25,29 @@ defmodule ExquisiteTest do
     to   = {{2013,2,2},{1,1,1}}
 
     s = Exquisite.match { a, b },
-      where:  a >= from &&& b <= to,
+      where:  a >= from and b <= to,
       select: 2
 
+    assert Exquisite.run!(s, { from, to }) == 2
+  end
+
+
+  test "Alternative &&&, ||| usage." do
+    from = {{2013,1,1},{1,1,1}}
+    to   = {{2013,2,2},{1,1,1}}
+    s = Exquisite.match { a, b },
+                        where:  a >= from &&& b <= to ||| b >= to &&& a <= from,
+                        select: 2
+    assert Exquisite.run!(s, { from, to }) == 2
+  end
+
+
+  test "and, and or work on elixir 1.6 and later." do
+    from = {{2013,1,1},{1,1,1}}
+    to   = {{2013,2,2},{1,1,1}}
+    s = Exquisite.match { a, b },
+                        where:  a >= from and b <= to or b >= to and a <= from,
+                        select: 2
     assert Exquisite.run!(s, { from, to }) == 2
   end
 

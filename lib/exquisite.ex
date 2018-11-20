@@ -6,6 +6,7 @@
 #
 #  0. You just DO WHAT THE FUCK YOU WANT TO.
 defmodule Exquisite do
+
   def x &&& y do
     x && y
   end
@@ -217,7 +218,28 @@ defmodule Exquisite do
   end
 
   defp condition(clause, table, caller) do
-    [internal(Macro.expand(clause, caller), table, caller)]
+
+    hack = clause
+                         |> Tuple.to_list()
+                         |> Enum.map(
+                              fn(x) ->
+                                case x do
+                                  :and -> :andalso
+                                  :or -> :orelse
+                                  v -> v
+                                end
+                              end)
+                         |> List.to_tuple()
+
+    # Before fix,
+    # clause = {:and, [line: 28], [{:>=, [line: 28], [{:a, [line: 28], nil}, {:from, [line: 28], nil}]}, {:<=, [line: 28], [{:b, [line: 28], nil}, {:to, [line: 28], nil}]}]}
+    # expand = {:case, [optimize_boolean: true], [{:>=, [line: 28], [{:a, [line: 28], nil}, {:from, [line: 28], nil}]}, [do: [{:->, [], [[false], false]}, {:->, [], [[true], {:<=, [line: 28], [{:b, [line: 28], nil}, {:to, [line: 28], nil}]}]}, {:->, [], [[{:other, [counter: -576460752303420255], Kernel}], {{:., [], [:erlang, :error]}, [], [{:{}, [], [:badbool, :and, {:other, [counter: -576460752303420255], Kernel}]}]}]}]]]}
+
+    # After fix,
+    # hack = {:==, [line: 36], [{{:., [line: 36], [{:foo, [line: 36], nil}, :a]}, [line: 36], []}, {1, 2}]}
+    # expand = {:==, [line: 36], [{{:., [line: 36], [{:foo, [line: 36], nil}, :a]}, [line: 36], []}, {1, 2}]}
+
+    [internal(Macro.expand(hack, caller), table, caller)]
   end
 
   defp body(clause, table, caller) do
