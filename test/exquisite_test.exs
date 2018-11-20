@@ -25,7 +25,7 @@ defmodule ExquisiteTest do
     to   = {{2013,2,2},{1,1,1}}
 
     s = Exquisite.match { a, b },
-      where:  a >= from and b <= to,
+      where:  a >= from &&& b <= to,
       select: 2
 
     assert Exquisite.run!(s, { from, to }) == 2
